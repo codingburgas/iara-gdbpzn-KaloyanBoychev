@@ -1,0 +1,20 @@
+{% extends "bootstrap/base.html" %}
+
+{% block navbar %}
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand" href="/">MyApp</a>
+
+    <div>
+      <a href="/login" class="btn btn-outline-light btn-sm">Login</a>
+      <a href="/register" class="btn btn-light btn-sm">Register</a>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% block page_content %}{% endblock %}
+</div>
+{% endblock %}
