@@ -5,10 +5,11 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 
 from config import config
-
+from flask_wtf.csrf import CSRFProtect
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
+csrf = CSRFProtect()
 
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
@@ -23,6 +24,7 @@ def create_app(config_name: str = 'default') -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
+    csrf.init_app(app)
 
     with app.app_context():
         # Import models for Flask-Migrate

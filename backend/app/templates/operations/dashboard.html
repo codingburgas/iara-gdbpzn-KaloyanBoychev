@@ -1,85 +1,135 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container py-5" style="max-width: 600px;">
-    <div class="card gdp-card">
-        <div class="card-body p-4">
+<div class="container-fluid px-4 py-4">
 
-            <h2 class="fw-700 mb-1">Create Account</h2>
-            <p class="text-muted mb-4">Register a new ГДПБЗН system user</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-700 mb-0">Operations Center</h1>
+            <p class="text-muted mb-0 small">Live incident overview</p>
+        </div>
+        {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+        <a href="{{ url_for('incidents.new_incident') }}" class="btn btn-warning fw-600">
+            <i class="bi bi-plus-lg me-1"></i>New Incident
+        </a>
+        {% endif %}
+    </div>
 
-            <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
-                {{ form.hidden_tag() }}
-
-                <div class="row g-3">
-                    <!-- First / Last name -->
-                    <div class="col-md-6">
-                        {{ form.first_name.label(class="form-label") }}
-                        {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
-                        {% for e in form.first_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.last_name.label(class="form-label") }}
-                        {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
-                        {% for e in form.last_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-
-                    <!-- Username -->
-                    <div class="col-md-6">
-                        {{ form.username.label(class="form-label") }}
-                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
-                        {% for e in form.username.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-
-                    <!-- Email -->
-                    <div class="col-md-6">
-                        {{ form.email.label(class="form-label") }}
-                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
-                        {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-
-                    <!-- Badge / Phone -->
-                    <div class="col-md-6">
-                        {{ form.badge_number.label(class="form-label") }}
-                        {{ form.badge_number(class="form-control" + (" is-invalid" if form.badge_number.errors else "")) }}
-                        {% for e in form.badge_number.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.phone.label(class="form-label") }}
-                        {{ form.phone(class="form-control") }}
-                    </div>
-
-                    <!-- Role -->
-                    <div class="col-12">
-                        {{ form.role.label(class="form-label") }}
-                        {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
-                        {% for e in form.role.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-
-                    <!-- Passwords -->
-                    <div class="col-md-6">
-                        {{ form.password.label(class="form-label") }}
-                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                        {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-                    <div class="col-md-6">
-                        {{ form.password2.label(class="form-label") }}
-                        {{ form.password2(class="form-control" + (" is-invalid" if form.password2.errors else "")) }}
-                        {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-
-                    <!-- Submit -->
-                    <div class="col-12 mt-2">
-                        {{ form.submit(class="btn btn-warning w-100 fw-600") }}
-                    </div>
-                </div>
-            </form>
-
-            <p class="text-center text-muted small mt-3 mb-0">
-                Already have an account?
-                <a href="{{ url_for('auth.login') }}" class="text-warning">Log in</a>
-            </p>
+    {% if active_sos %}
+    <div class="alert alert-danger d-flex align-items-center gap-3 sos-banner mb-4" role="alert">
+        <i class="bi bi-exclamation-octagon-fill fs-3 flex-shrink-0"></i>
+        <div>
+            <strong>FIREFIGHTER SOS — IMMEDIATE RESPONSE REQUIRED</strong><br>
+            <span class="small">
+                {{ active_sos|length }} active distress signal{{ 's' if active_sos|length > 1 }}.
+            </span>
         </div>
     </div>
+    {% endif %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-card--active">
+                <div class="stat-card__value">{{ active_incidents|length }}</div>
+                <div class="stat-card__label">
+                    <i class="bi bi-exclamation-triangle me-1"></i>Active Incidents
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-card--pending">
+                <div class="stat-card__value">{{ pending_count }}</div>
+                <div class="stat-card__label">
+                    <i class="bi bi-clock me-1"></i>Awaiting Dispatch
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-card--personnel">
+                <div class="stat-card__value">{{ on_duty_count }}</div>
+                <div class="stat-card__label">
+                    <i class="bi bi-people me-1"></i>On Duty
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card stat-card--vehicles">
+                <div class="stat-card__value">{{ available_vehicles }}</div>
+                <div class="stat-card__label">
+                    <i class="bi bi-truck me-1"></i>Vehicles Available
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card gdp-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-600">
+                <i class="bi bi-list-ul me-2"></i>Active Incidents
+            </span>
+            <a href="{{ url_for('incidents.list_incidents') }}" class="btn btn-sm btn-outline-secondary">
+                View All
+            </a>
+        </div>
+        <div class="card-body p-0">
+            {% if active_incidents %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover gdp-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ref</th>
+                            <th>Type</th>
+                            <th>Address</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Crew</th>
+                            <th>Reported</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inc in active_incidents %}
+                        <tr>
+                            <td class="font-monospace text-warning small">
+                                {{ inc.reference_number or '#' ~ inc.id }}
+                            </td>
+                            <td>{{ inc.incident_type.value.replace('_', ' ').title() }}</td>
+                            <td>{{ inc.address }}</td>
+                            <td>
+                                <span class="badge priority-{{ inc.priority.value }}">
+                                    {{ inc.priority.value.upper() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge status-{{ inc.status.value }}">
+                                    {{ inc.status.value.replace('_', ' ').upper() }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                {{ inc.assigned_crew.name if inc.assigned_crew else '—' }}
+                            </td>
+                            <td class="text-muted small">
+                                {{ inc.reported_at.strftime('%H:%M') }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('incidents.detail', incident_id=inc.id) }}"
+                                   class="btn btn-sm btn-outline-warning">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state py-5 text-center">
+                <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+                <p class="text-muted mb-0">No active incidents. All clear.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
 {% endblock %}
