@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 fw-700 mb-0">Incidents</h1>
+        {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+        <a href="{{ url_for('incidents.new_incident') }}" class="btn btn-warning fw-600">
+            <i class="bi bi-plus-lg me-1"></i>New Incident
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Status filter tabs -->
+    <div class="mb-4">
+        <a href="{{ url_for('incidents.list_incidents') }}"
+           class="btn btn-sm me-1 {% if not current_status %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            All
+        </a>
+        {% for s in statuses %}
+        <a href="{{ url_for('incidents.list_incidents', status=s) }}"
+           class="btn btn-sm me-1 {% if current_status == s %}btn-warning{% else %}btn-outline-secondary{% endif %}">
+            {{ s.replace('_', ' ').title() }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="card gdp-card">
+        <div class="card-body p-0">
+            {% if incidents %}
+            <div class="table-responsive">
+                <table class="table table-dark table-hover gdp-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Ref</th>
+                            <th>Type</th>
+                            <th>Address</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Reported</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inc in incidents %}
+                        <tr>
+                            <td class="font-monospace text-warning small">
+                                {{ inc.reference_number or '#' ~ inc.id }}
+                            </td>
+                            <td>{{ inc.incident_type.value.replace('_', ' ').title() }}</td>
+                            <td>
+                                {{ inc.address }}<br>
+                                <small class="text-muted">{{ inc.city }}</small>
+                            </td>
+                            <td>
+                                <span class="badge priority-{{ inc.priority.value }}">
+                                    {{ inc.priority.value.upper() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge status-{{ inc.status.value }}">
+                                    {{ inc.status.value.replace('_', ' ').upper() }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                {{ inc.reported_at.strftime('%d %b %Y %H:%M') }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('incidents.detail', incident_id=inc.id) }}"
+                                   class="btn btn-sm btn-outline-warning">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state py-5 text-center">
+                <i class="bi bi-search fs-1 text-muted d-block mb-2"></i>
+                <p class="text-muted mb-0">No incidents found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

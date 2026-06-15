@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4" style="max-width: 960px;">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('operations.dashboard') }}" class="text-warning">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('incidents.list_incidents') }}" class="text-warning">Incidents</a>
+            </li>
+            <li class="breadcrumb-item active">
+                {{ incident.reference_number or '#' ~ incident.id }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="h3 fw-700 mb-1 font-monospace text-warning">
+                {{ incident.reference_number or 'INC-' ~ incident.id }}
+            </h1>
+            <p class="text-muted mb-0">
+                {{ incident.incident_type.value.replace('_',' ').title() }} &mdash;
+                {{ incident.address }}, {{ incident.city }}
+            </p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge priority-{{ incident.priority.value }} fs-6 px-3 py-2">
+                {{ incident.priority.value.upper() }}
+            </span>
+            <span class="badge status-{{ incident.status.value }} fs-6 px-3 py-2">
+                {{ incident.status.value.replace('_',' ').upper() }}
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left: Details -->
+        <div class="col-lg-7">
+            <div class="card gdp-card mb-4">
+                <div class="card-header fw-600">
+                    <i class="bi bi-info-circle me-2"></i>Incident Details
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Reported</dt>
+                        <dd class="col-sm-8">{{ incident.reported_at.strftime('%d %b %Y %H:%M') }}</dd>
+
+                        {% if incident.dispatched_at %}
+                        <dt class="col-sm-4 text-muted">Dispatched</dt>
+                        <dd class="col-sm-8">{{ incident.dispatched_at.strftime('%d %b %Y %H:%M') }}</dd>
+                        {% endif %}
+
+                        {% if incident.on_scene_at %}
+                        <dt class="col-sm-4 text-muted">On Scene</dt>
+                        <dd class="col-sm-8">{{ incident.on_scene_at.strftime('%d %b %Y %H:%M') }}</dd>
+                        {% endif %}
+
+                        {% if incident.resolved_at %}
+                        <dt class="col-sm-4 text-muted">Resolved</dt>
+                        <dd class="col-sm-8">{{ incident.resolved_at.strftime('%d %b %Y %H:%M') }}</dd>
+                        {% endif %}
+
+                        <dt class="col-sm-4 text-muted">Caller</dt>
+                        <dd class="col-sm-8">
+                            {{ incident.caller_name or '—' }}
+                            {% if incident.caller_phone %}
+                                &nbsp;<span class="font-monospace">{{ incident.caller_phone }}</span>
+                            {% endif %}
+                        </dd>
+
+                        {% if incident.latitude and incident.longitude %}
+                        <dt class="col-sm-4 text-muted">GPS</dt>
+                        <dd class="col-sm-8 font-monospace small">
+                            {{ "%.5f"|format(incident.latitude) }},
+                            {{ "%.5f"|format(incident.longitude) }}
+                        </dd>
+                        {% endif %}
+
+                        {% if incident.description %}
+                        <dt class="col-sm-4 text-muted">Description</dt>
+                        <dd class="col-sm-8">{{ incident.description }}</dd>
+                        {% endif %}
+
+                        {% if incident.hazard_notes %}
+                        <dt class="col-sm-4 text-muted">
+                            <i class="bi bi-exclamation-diamond text-danger me-1"></i>Hazards
+                        </dt>
+                        <dd class="col-sm-8 text-danger">{{ incident.hazard_notes }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Actions -->
+        <div class="col-lg-5">
+
+            <!-- Assigned crew -->
+            <div class="card gdp-card mb-4">
+                <div class="card-header fw-600">
+                    <i class="bi bi-people me-2"></i>Assigned Crew
+                </div>
+                <div class="card-body">
+                    {% if incident.assigned_crew %}
+                        <p class="fw-600 mb-1">{{ incident.assigned_crew.name }}</p>
+                        <p class="text-muted small mb-0">{{ incident.assigned_crew.station }}</p>
+                    {% else %}
+                        <p class="text-muted mb-0">No crew assigned yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Status update (ops/dispatcher/admin only) -->
+            {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] and incident.is_active %}
+            <div class="card gdp-card">
+                <div class="card-header fw-600">
+                    <i class="bi bi-arrow-repeat me-2"></i>Update Status
+                </div>
+                <div class="card-body d-flex flex-wrap gap-2">
+                    {% set transitions = {
+                        'pending':     ['dispatched', 'cancelled'],
+                        'dispatched':  ['on_scene', 'cancelled'],
+                        'on_scene':    ['in_progress'],
+                        'in_progress': ['resolved', 'on_scene']
+                    } %}
+                    {% set allowed = transitions.get(incident.status.value, []) %}
+                    {% for next_status in allowed %}
+                    <form method="POST"
+                          action="{{ url_for('incidents.update_status', incident_id=incident.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="status" value="{{ next_status }}">
+                        <button type="submit"
+                                class="btn btn-sm {% if next_status == 'cancelled' %}btn-outline-danger{% elif next_status == 'resolved' %}btn-success{% else %}btn-outline-warning{% endif %}">
+                            → {{ next_status.replace('_',' ').title() }}
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

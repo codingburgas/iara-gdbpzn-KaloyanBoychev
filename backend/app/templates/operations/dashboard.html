@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 600px;">
+    <div class="card gdp-card">
+        <div class="card-body p-4">
+
+            <h2 class="fw-700 mb-1">Create Account</h2>
+            <p class="text-muted mb-4">Register a new ГДПБЗН system user</p>
+
+            <form method="POST" action="{{ url_for('auth.register') }}" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="row g-3">
+                    <!-- First / Last name -->
+                    <div class="col-md-6">
+                        {{ form.first_name.label(class="form-label") }}
+                        {{ form.first_name(class="form-control" + (" is-invalid" if form.first_name.errors else "")) }}
+                        {% for e in form.first_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.last_name.label(class="form-label") }}
+                        {{ form.last_name(class="form-control" + (" is-invalid" if form.last_name.errors else "")) }}
+                        {% for e in form.last_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <!-- Username -->
+                    <div class="col-md-6">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                        {% for e in form.username.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <!-- Badge / Phone -->
+                    <div class="col-md-6">
+                        {{ form.badge_number.label(class="form-label") }}
+                        {{ form.badge_number(class="form-control" + (" is-invalid" if form.badge_number.errors else "")) }}
+                        {% for e in form.badge_number.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.phone.label(class="form-label") }}
+                        {{ form.phone(class="form-control") }}
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-12">
+                        {{ form.role.label(class="form-label") }}
+                        {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                        {% for e in form.role.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <!-- Passwords -->
+                    <div class="col-md-6">
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                        {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.password2.label(class="form-label") }}
+                        {{ form.password2(class="form-control" + (" is-invalid" if form.password2.errors else "")) }}
+                        {% for e in form.password2.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="col-12 mt-2">
+                        {{ form.submit(class="btn btn-warning w-100 fw-600") }}
+                    </div>
+                </div>
+            </form>
+
+            <p class="text-center text-muted small mt-3 mb-0">
+                Already have an account?
+                <a href="{{ url_for('auth.login') }}" class="text-warning">Log in</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

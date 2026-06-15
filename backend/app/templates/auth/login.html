@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="auth-wrapper d-flex align-items-center justify-content-center">
+    <div class="auth-card">
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <i class="bi bi-fire text-warning auth-icon"></i>
+            <h1 class="h3 fw-700 mt-2">ГДПБЗН</h1>
+            <p class="text-muted">Fire Safety & Civil Protection</p>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+            {{ form.hidden_tag() }}
+
+            <!-- Username -->
+            <div class="mb-3">
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""),
+                                 placeholder="Enter your username") }}
+                {% for error in form.username.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                {{ form.password.label(class="form-label") }}
+                {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""),
+                                 placeholder="Enter your password") }}
+                {% for error in form.password.errors %}
+                    <div class="invalid-feedback">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <!-- Remember me -->
+            <div class="mb-4 form-check">
+                {{ form.remember_me(class="form-check-input") }}
+                {{ form.remember_me.label(class="form-check-label text-muted") }}
+            </div>
+
+            {{ form.submit(class="btn btn-warning w-100 fw-600") }}
+        </form>
+
+        <hr class="my-4">
+        <p class="text-center text-muted small mb-0">
+            No account?
+            <a href="{{ url_for('auth.register') }}" class="text-warning">Create one</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
