@@ -3,13 +3,16 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from flask_wtf.csrf import CSRFProtect
+from flask_socketio import SocketIO
 
 from config import config
-from flask_wtf.csrf import CSRFProtect
+
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
+socketio = SocketIO()
 
 login_manager.login_view = 'auth.login'
 login_manager.login_message = 'Please log in to access this page.'
@@ -25,7 +28,7 @@ def create_app(config_name: str = 'default') -> Flask:
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
-
+    socketio.init_app(app, cors_allowed_origins="*")
     with app.app_context():
         # Import models for Flask-Migrate
         from app.models import user, crew, vehicle, incident, task, message  # noqa: F401
@@ -38,5 +41,5 @@ def create_app(config_name: str = 'default') -> Flask:
         app.register_blueprint(auth_bp, url_prefix='/auth')
         app.register_blueprint(incidents_bp, url_prefix='/incidents')
         app.register_blueprint(operations_bp, url_prefix='/')
-
+        from app import socket_events
     return app
