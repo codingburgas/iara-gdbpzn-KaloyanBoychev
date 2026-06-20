@@ -23,23 +23,25 @@ def create_app(config_name: str = 'default') -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config[config_name])
 
-    # Bind extensions
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
     socketio.init_app(app, cors_allowed_origins="*")
+
     with app.app_context():
-        # Import models for Flask-Migrate
         from app.models import user, crew, vehicle, incident, task, message  # noqa: F401
 
-        # ── Register Blueprints ───────────────────────────────────────────────
         from app.blueprints.auth import auth_bp
         from app.blueprints.incidents import incidents_bp
         from app.blueprints.operations import operations_bp
+        from app.blueprints.crews import crews_bp          # ← MUST be here, inside the function
 
         app.register_blueprint(auth_bp, url_prefix='/auth')
         app.register_blueprint(incidents_bp, url_prefix='/incidents')
         app.register_blueprint(operations_bp, url_prefix='/')
-        from app import socket_events
+        app.register_blueprint(crews_bp, url_prefix='/crews')   # ← register here too
+
+        from app import socket_events  # noqa: F401
+
     return app

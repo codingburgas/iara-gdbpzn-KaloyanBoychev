@@ -94,6 +94,14 @@
                         </li>
                     </ul>
                 </li>
+                {% if current_user.role.value in ['ops', 'admin'] %}
+<li class="nav-item">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('crews') %}active{% endif %}"
+       href="{{ url_for('crews.list_crews') }}">
+        <i class="bi bi-people me-1"></i>Crews
+    </a>
+</li>
+{% endif %}
             </ul>
             {% endif %}
         </div>
