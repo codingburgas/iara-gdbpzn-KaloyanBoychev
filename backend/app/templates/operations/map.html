@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #liveMap {
+        height: 70vh;
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid var(--gdp-border);
+    }
+    .leaflet-popup-content-wrapper {
+        background: var(--gdp-surface);
+        color: var(--gdp-text);
+    }
+    .leaflet-popup-tip { background: var(--gdp-surface); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-700 mb-0">Live Operations Map</h1>
+            <p class="text-muted mb-0 small">Real-time crew and vehicle positions</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-secondary"><i class="bi bi-circle-fill text-primary me-1"></i>Crew</span>
+            <span class="badge bg-secondary"><i class="bi bi-circle-fill text-warning me-1"></i>Vehicle</span>
+            <span class="badge bg-secondary"><i class="bi bi-circle-fill text-danger me-1"></i>SOS</span>
+        </div>
+    </div>
+
+    <div id="liveMap"></div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+    // Center the map roughly on Burgas, Bulgaria — adjust as needed
+    const map = L.map('liveMap').setView([42.5048, 27.4626], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 18,
+    }).addTo(map);
+
+    // Marker registries — keyed by ID so we can update positions in-place
+    const crewMarkers = {};
+    const vehicleMarkers = {};
+    const sosMarkers = {};
+
+    const crewIcon = L.divIcon({ className: 'map-dot map-dot--crew', iconSize: [16, 16] });
+    const vehicleIcon = L.divIcon({ className: 'map-dot map-dot--vehicle', iconSize: [16, 16] });
+    const sosIcon = L.divIcon({ className: 'map-dot map-dot--sos', iconSize: [22, 22] });
+
+    // ── Initial load via HTTP fallback API ──────────────────────────────────
+    fetch("{{ url_for('operations.crew_positions') }}")
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(c => {
+                const marker = L.marker([c.latitude, c.longitude], { icon: crewIcon })
+                    .addTo(map)
+                    .bindPopup(`<strong>${c.name}</strong><br>Firefighter`);
+                crewMarkers[c.user_id] = marker;
+            });
+        });
+
+    fetch("{{ url_for('operations.vehicle_positions') }}")
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(v => {
+                const marker = L.marker([v.latitude, v.longitude], { icon: vehicleIcon })
+                    .addTo(map)
+                    .bindPopup(`<strong>${v.call_sign || v.plate_number}</strong><br>${v.status}`);
+                vehicleMarkers[v.vehicle_id] = marker;
+            });
+        });
+
+    // ── Live updates via SocketIO ────────────────────────────────────────────
+    const socket = io();
+
+    socket.on('crew_position_update', (data) => {
+        if (crewMarkers[data.user_id]) {
+            crewMarkers[data.user_id].setLatLng([data.latitude, data.longitude]);
+        } else {
+            crewMarkers[data.user_id] = L.marker([data.latitude, data.longitude], { icon: crewIcon })
+                .addTo(map)
+                .bindPopup(`<strong>${data.name}</strong><br>Firefighter`);
+        }
+    });
+
+    socket.on('sos_alert_received', (data) => {
+        const marker = L.marker([data.latitude, data.longitude], { icon: sosIcon })
+            .addTo(map)
+            .bindPopup(`<strong class="text-danger">SOS: ${data.firefighter_name}</strong><br>${data.notes || ''}`)
+            .openPopup();
+        sosMarkers[data.alert_id] = marker;
+        map.setView([data.latitude, data.longitude], 15);
+    });
+
+    socket.on('sos_acknowledged', (data) => {
+        if (sosMarkers[data.alert_id]) {
+            map.removeLayer(sosMarkers[data.alert_id]);
+            delete sosMarkers[data.alert_id];
+        }
+    });
+</script>
+{% endblock %}

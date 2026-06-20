@@ -9,7 +9,7 @@ from app.models.incident import Incident, IncidentStatus, IncidentType, Incident
 from app.models.crew import Crew
 from app.blueprints.incidents.forms import IncidentForm
 from app.utils.decorators import ops_or_dispatcher_required
-
+from app import socketio
 incidents_bp = Blueprint(
     'incidents', __name__,
     template_folder='../../templates/incidents'
@@ -65,10 +65,6 @@ def detail(incident_id):
 @login_required
 @ops_or_dispatcher_required
 def new_incident():
-    """
-    Register a new incident.
-    Only accessible by Dispatchers and Operations Center staff.
-    """
     form = IncidentForm()
 
     if form.validate_on_submit():
@@ -86,17 +82,33 @@ def new_incident():
             registered_by_id=current_user.id,
         )
 
-        # Assign crew if selected
         if form.assigned_crew_id.data and form.assigned_crew_id.data != 0:
             incident.assigned_crew_id = form.assigned_crew_id.data
             incident.status = IncidentStatus.DISPATCHED
             incident.dispatched_at = datetime.utcnow()
 
         db.session.add(incident)
-        db.session.flush()  # Get the ID before commit so we can generate reference
+        db.session.flush()
 
         incident.reference_number = incident.generate_reference()
         db.session.commit()
+
+        # ── Notify assigned crew in real time ─────────────────────────────────
+        if incident.assigned_crew_id:
+            crew = db.session.get(Crew, incident.assigned_crew_id)
+            if crew:
+                for member in crew.members:
+                    socketio.emit('new_incident_assigned', {
+                        'incident_id': incident.id,
+                        'reference_number': incident.reference_number,
+                        'incident_type': incident.incident_type.value,
+                        'priority': incident.priority.value,
+                        'address': incident.address,
+                        'city': incident.city,
+                        'latitude': incident.latitude,
+                        'longitude': incident.longitude,
+                        'hazard_notes': incident.hazard_notes,
+                    }, room=f'user_{member.id}')
 
         flash(f'Incident {incident.reference_number} registered successfully.', 'success')
         return redirect(url_for('incidents.detail', incident_id=incident.id))

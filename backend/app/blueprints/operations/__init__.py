@@ -58,3 +58,24 @@ def dashboard():
         pending_count=pending_count,
         title='Operations Center'
     )
+
+from app.blueprints.operations import api
+
+@operations_bp.route('/sos-history')
+@login_required
+@ops_required
+def sos_history():
+    """Show a full history of all SOS alerts, newest first."""
+    from app.models.message import SOSAlert
+    alerts = SOSAlert.query.order_by(SOSAlert.triggered_at.desc()).all()
+    return render_template(
+        'operations/sos_history.html',
+        alerts=alerts,
+        title='SOS Alert History'
+    )
+
+@operations_bp.route('/map')
+@login_required
+def live_map():
+    """Live operations map showing crew and vehicle positions."""
+    return render_template('operations/map.html', title='Live Map')

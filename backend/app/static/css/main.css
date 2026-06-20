@@ -233,3 +233,15 @@ body {
     .stat-card__value { font-size: 1.5rem; }
     .auth-card { padding: 1.5rem; }
 }
+
+/* ── Live Map Markers ─────────────────────────────────────────────────────── */
+.map-dot {
+    border-radius: 50%;
+    border: 2px solid #fff;
+}
+.map-dot--crew    { background-color: #4aa8ff; }
+.map-dot--vehicle { background-color: var(--gdp-accent); }
+.map-dot--sos     {
+    background-color: var(--gdp-danger);
+    animation: sos-flash 1s ease-in-out infinite;
+}
