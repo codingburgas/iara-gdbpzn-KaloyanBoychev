@@ -168,14 +168,61 @@ def handle_sos_acknowledge(data):
     alert.acknowledge(current_user.id)
     db.session.commit()
 
-    # Tell every ops screen this alert is now handled (removes it from their UI)
     emit('sos_acknowledged', {
         'alert_id': alert.id,
         'acknowledged_by': current_user.full_name,
     }, room='ops_center')
 
-    # Tell the firefighter directly: "help is on the way"
     emit('sos_response_confirmed', {
         'alert_id': alert.id,
         'acknowledged_by': current_user.full_name,
     }, room=f'user_{alert.firefighter_id}')
+
+
+# ── Chat messages ────────────────────────────────────────────────────────────
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    """
+    Fired when a user sends a text or template message in an incident's
+    chat panel. Persists to the database, then broadcasts to everyone
+    currently in that incident's room.
+
+    Expected data: {'incident_id': 5, 'content': 'En route', 'message_type': 'text'}
+    (message_type defaults to 'text' if not provided)
+    """
+    if not current_user.is_authenticated:
+        return
+
+    incident_id = data.get('incident_id')
+    content = (data.get('content') or '').strip()
+    if not incident_id or not content:
+        return
+
+    from app.models.message import Message, MessageType
+
+    msg_type_value = data.get('message_type', 'text')
+    try:
+        msg_type = MessageType(msg_type_value)
+    except ValueError:
+        msg_type = MessageType.TEXT
+
+    message = Message(
+        content=content,
+        message_type=msg_type,
+        sender_id=current_user.id,
+        incident_id=incident_id,
+    )
+    db.session.add(message)
+    db.session.commit()
+
+    emit('new_chat_message', {
+        'id': message.id,
+        'content': message.content,
+        'message_type': message.message_type.value,
+        'image_path': None,
+        'sender_id': current_user.id,
+        'sender_name': current_user.full_name,
+        'incident_id': incident_id,
+        'sent_at': message.sent_at.isoformat(),
+    }, room=f'incident_{incident_id}')

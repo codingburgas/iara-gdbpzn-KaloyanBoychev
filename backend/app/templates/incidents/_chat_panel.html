@@ -1,0 +1,186 @@
+<!-- Chat panel — included inside incidents/detail.html -->
+<div class="card gdp-card mt-4">
+    <div class="card-header fw-600">
+        <i class="bi bi-chat-dots me-2"></i>Incident Chat
+    </div>
+
+    <div class="card-body p-0">
+        <!-- Message log -->
+        <div id="chatLog" class="chat-log p-3"></div>
+
+        <!-- Composer -->
+        <div class="chat-composer border-top p-3" style="border-color: var(--gdp-border) !important;">
+
+            <!-- Quick templates -->
+            <div class="mb-2 d-flex flex-wrap gap-1">
+                {% for template in quick_templates %}
+                <button type="button"
+                        class="btn btn-sm btn-outline-secondary quick-template-btn"
+                        data-text="{{ template }}">
+                    {{ template }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <form id="chatForm" class="d-flex gap-2">
+                <input type="text" id="chatInput" class="form-control"
+                       placeholder="Type a message…" autocomplete="off">
+
+                <label class="btn btn-outline-warning mb-0" title="Attach photo">
+                    <i class="bi bi-camera"></i>
+                    <input type="file" id="chatImageInput" accept="image/*" hidden>
+                </label>
+
+                <button type="submit" class="btn btn-warning fw-600">
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-log {
+        max-height: 360px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .chat-bubble {
+        max-width: 75%;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+    }
+    .chat-bubble--own {
+        align-self: flex-end;
+        background: var(--gdp-accent);
+        color: #0d1b2a;
+    }
+    .chat-bubble--other {
+        align-self: flex-start;
+        background: var(--gdp-surface-2);
+        color: var(--gdp-text);
+    }
+    .chat-bubble__meta {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-bottom: 2px;
+    }
+    .chat-bubble img {
+        max-width: 220px;
+        border-radius: 8px;
+        margin-top: 4px;
+        display: block;
+    }
+    .quick-template-btn {
+        font-size: 0.72rem;
+        padding: 2px 8px;
+    }
+</style>
+
+<script>
+(function () {
+    const incidentId = {{ incident.id }};
+    const currentUserId = {{ current_user.id }};
+    const chatLog = document.getElementById('chatLog');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatImageInput = document.getElementById('chatImageInput');
+
+    function renderMessage(msg) {
+        const isOwn = msg.sender_id === currentUserId;
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${isOwn ? 'chat-bubble--own' : 'chat-bubble--other'}`;
+
+        const time = new Date(msg.sent_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        let inner = `<div class="chat-bubble__meta">${msg.sender_name} · ${time}</div>`;
+
+        if (msg.message_type === 'image' && msg.image_path) {
+            inner += `<img src="/static/${msg.image_path}" alt="Shared photo">`;
+        } else {
+            inner += `<div>${escapeHtml(msg.content || '')}</div>`;
+        }
+
+        bubble.innerHTML = inner;
+        chatLog.appendChild(bubble);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ── Load message history on page load ────────────────────────────────────
+    fetch(`/chat/incident/${incidentId}/messages`)
+        .then(res => res.json())
+        .then(messages => messages.forEach(renderMessage));
+
+    // ── SocketIO: join this incident's room, listen for new messages ────────
+    const socket = io();
+    socket.emit('join_incident', { incident_id: incidentId });
+
+    socket.on('new_chat_message', (msg) => {
+        if (msg.incident_id === undefined || msg.incident_id === incidentId) {
+            renderMessage(msg);
+        }
+    });
+
+    // Leave the room when navigating away
+    window.addEventListener('beforeunload', () => {
+        socket.emit('leave_incident', { incident_id: incidentId });
+    });
+
+    // ── Send a text message ───────────────────────────────────────────────────
+    chatForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        socket.emit('send_message', {
+            incident_id: incidentId,
+            content: text,
+        });
+        chatInput.value = '';
+    });
+
+    // ── Quick template buttons ────────────────────────────────────────────────
+    document.querySelectorAll('.quick-template-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            socket.emit('send_message', {
+                incident_id: incidentId,
+                content: btn.dataset.text,
+                message_type: 'template',
+            });
+        });
+    });
+
+    // ── Image upload ──────────────────────────────────────────────────────────
+    chatImageInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        fetch(`/chat/incident/${incidentId}/upload-image`, {
+            method: 'POST',
+            body: formData,
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert('Upload failed: ' + data.error);
+            }
+            // No need to manually render — the server's SocketIO broadcast
+            // will deliver it back to us via 'new_chat_message'
+        })
+        .catch(err => alert('Upload failed: ' + err));
+
+        this.value = ''; // Reset file input
+    });
+})();
+</script>

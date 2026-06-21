@@ -29,3 +29,7 @@ Thumbs.db
 
 # Migrations cache (keep versions/ folder itself)
 migrations/versions/__pycache__/
+
+# Uploaded chat images (user content, not source code)
+app/static/uploads/*
+!app/static/uploads/.gitkeep

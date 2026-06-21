@@ -47,16 +47,18 @@ def list_incidents():
     )
 
 
+from app.utils.message_templates import QUICK_MESSAGE_TEMPLATES
+
 @incidents_bp.route('/<int:incident_id>')
 @login_required
 def detail(incident_id):
-    """Show full details for a single incident."""
     incident = db.session.get(Incident, incident_id)
     if incident is None:
         abort(404)
     return render_template(
         'incidents/detail.html',
         incident=incident,
+        quick_templates=QUICK_MESSAGE_TEMPLATES,
         title=f'Incident {incident.reference_number or incident.id}'
     )
 
