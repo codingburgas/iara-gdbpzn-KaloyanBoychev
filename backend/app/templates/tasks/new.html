@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 640px;">
+    <div class="card gdp-card">
+        <div class="card-header fw-600">
+            <i class="bi bi-clipboard-plus me-2"></i>New Task
+            <span class="text-muted small ms-2">
+                for {{ incident.reference_number or '#' ~ incident.id }}
+            </span>
+        </div>
+        <div class="card-body p-4">
+
+            <form method="POST"
+                  action="{{ url_for('tasks.new_task', incident_id=incident.id) }}" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""),
+                                  placeholder="e.g. Deliver water tanker to scene") }}
+                    {% for e in form.title.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.task_type.label(class="form-label") }}
+                    {{ form.task_type(class="form-select") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.assigned_crew_id.label(class="form-label") }}
+                    {{ form.assigned_crew_id(class="form-select" + (" is-invalid" if form.assigned_crew_id.errors else "")) }}
+                    {% for e in form.assigned_crew_id.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.location_notes.label(class="form-label") }}
+                    {{ form.location_notes(class="form-control", placeholder="Optional — e.g. 'rear access road'") }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control", rows=3) }}
+                </div>
+
+                <div class="d-flex gap-2">
+                    {{ form.submit(class="btn btn-warning fw-600 px-4") }}
+                    <a href="{{ url_for('incidents.detail', incident_id=incident.id) }}"
+                       class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
