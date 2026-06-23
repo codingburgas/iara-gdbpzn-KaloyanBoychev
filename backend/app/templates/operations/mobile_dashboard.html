@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mobile-shell">
+
+    <h1 class="h4 fw-700 mb-1">Welcome, {{ current_user.first_name }}</h1>
+    <p class="text-muted small mb-4">
+        Status:
+        <span class="badge
+            {% if current_user.leave_status.value == 'on_duty' %}bg-success
+            {% else %}bg-secondary{% endif %}">
+            {{ current_user.leave_status.value.replace('_', ' ').upper() }}
+        </span>
+    </p>
+
+    {% if my_incidents %}
+        <h2 class="h6 text-muted text-uppercase mb-2" style="letter-spacing: 0.04em;">
+            Active Assignments
+        </h2>
+
+        {% for incident in my_incidents %}
+        <div class="mobile-incident-card">
+            <div class="mobile-incident-card__ref">
+                {{ incident.reference_number or '#' ~ incident.id }}
+            </div>
+            <div class="mobile-incident-card__address">
+                {{ incident.address }}
+            </div>
+            <p class="text-muted small mb-2">
+                {{ incident.city }} &middot;
+                {{ incident.incident_type.value.replace('_', ' ').title() }}
+            </p>
+
+            <div class="d-flex gap-2 mb-2">
+                <span class="badge priority-{{ incident.priority.value }}">
+                    {{ incident.priority.value.upper() }}
+                </span>
+                <span class="badge status-{{ incident.status.value }}">
+                    {{ incident.status.value.replace('_', ' ').upper() }}
+                </span>
+            </div>
+
+            {% if incident.hazard_notes %}
+            <div class="hazard-banner">
+                <p class="hazard-banner__title">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>Hazard Warning
+                </p>
+                <p class="mb-0 small">{{ incident.hazard_notes }}</p>
+            </div>
+            {% endif %}
+
+            {% if incident.action_plan %}
+            <div class="mb-3">
+                <p class="text-muted small fw-600 mb-1">Action Plan</p>
+                <p class="small mb-0">{{ incident.action_plan }}</p>
+            </div>
+            {% endif %}
+
+            <div class="d-flex flex-column gap-2 mt-3">
+                {% if incident.latitude and incident.longitude %}
+                <a href="https://www.google.com/maps/dir/?api=1&destination={{ incident.latitude }},{{ incident.longitude }}"
+                   target="_blank" rel="noopener"
+                   class="mobile-action-btn mobile-action-btn--navigate">
+                    <i class="bi bi-compass"></i> Navigate
+                </a>
+                {% endif %}
+                <a href="{{ url_for('incidents.detail', incident_id=incident.id) }}"
+                   class="mobile-action-btn mobile-action-btn--chat">
+                    <i class="bi bi-chat-dots"></i> Open Chat & Details
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-check-circle fs-1 text-success d-block mb-2"></i>
+            <p class="text-muted">No active assignments right now.</p>
+        </div>
+    {% endif %}
+
+    {% if my_tasks %}
+    <h2 class="h6 text-muted text-uppercase mb-2 mt-4" style="letter-spacing: 0.04em;">
+        My Tasks
+    </h2>
+    {% for task in my_tasks %}
+    <div class="mobile-incident-card">
+        <p class="fw-600 mb-1">{{ task.title }}</p>
+        <p class="text-muted small mb-2">
+            {{ task.task_type.value.replace('_', ' ').title() }}
+        </p>
+        <span class="badge status-{{ task.status.value }}">
+            {{ task.status.value.replace('_', ' ').upper() }}
+        </span>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+</div>
+
+<!-- The persistent SOS button — see Phase 3 -->
+{% include "operations/_sos_button.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/gps_tracker.js') }}"></script>
+{% endblock %}

@@ -1,6 +1,6 @@
 # app/blueprints/operations/__init__.py
 from flask import Blueprint, render_template
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from app.models.incident import Incident, IncidentStatus
 from app.models.crew import Crew
@@ -79,3 +79,34 @@ def sos_history():
 def live_map():
     """Live operations map showing crew and vehicle positions."""
     return render_template('operations/map.html', title='Live Map')
+
+@operations_bp.route('/mobile')
+@login_required
+def mobile_dashboard():
+    """
+    Mobile-optimized dashboard for firefighters.
+    Shows only incidents assigned to crews this user belongs to,
+    plus their own active task list.
+    """
+    from app.models.incident import Incident, IncidentStatus
+    from app.models.task import Task, TaskStatus
+
+    # Get all crew IDs this user belongs to
+    my_crew_ids = [c.id for c in current_user.crews]
+
+    my_incidents = Incident.query.filter(
+        Incident.assigned_crew_id.in_(my_crew_ids),
+        Incident.status.notin_([IncidentStatus.RESOLVED, IncidentStatus.CANCELLED])
+    ).order_by(Incident.reported_at.desc()).all() if my_crew_ids else []
+
+    my_tasks = Task.query.filter(
+        Task.assigned_crew_id.in_(my_crew_ids),
+        Task.status.notin_([TaskStatus.COMPLETED, TaskStatus.CANCELLED])
+    ).order_by(Task.created_at.desc()).all() if my_crew_ids else []
+
+    return render_template(
+        'operations/mobile_dashboard.html',
+        my_incidents=my_incidents,
+        my_tasks=my_tasks,
+        title='My Dashboard'
+    )

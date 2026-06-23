@@ -34,11 +34,15 @@ def login():
         login_user(user, remember=form.remember_me.data)
         flash(f'Welcome back, {user.full_name}.', 'success')
 
-        # Respect the 'next' parameter (e.g. after being redirected from a
-        # protected page back to login)
         next_page = request.args.get('next')
-        return redirect(next_page or url_for('operations.dashboard'))
+        if next_page:
+            return redirect(next_page)
 
+        # Firefighters land on the mobile-optimized view; everyone else
+        # gets the full Operations dashboard
+        if user.is_firefighter:
+            return redirect(url_for('operations.mobile_dashboard'))
+        return redirect(url_for('operations.dashboard'))
     return render_template('auth/login.html', form=form, title='Log In')
 
 
