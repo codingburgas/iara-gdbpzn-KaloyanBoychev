@@ -82,7 +82,7 @@
         });
 
     // ── Live updates via SocketIO ────────────────────────────────────────────
-    const socket = io();
+    const socket = window.gdpSocket || io();
 
     socket.on('crew_position_update', (data) => {
         if (crewMarkers[data.user_id]) {

@@ -120,7 +120,7 @@
         .then(messages => messages.forEach(renderMessage));
 
     // ── SocketIO: join this incident's room, listen for new messages ────────
-    const socket = io();
+    const socket = window.gdpSocket || io();
     socket.emit('join_incident', { incident_id: incidentId });
 
     socket.on('new_chat_message', (msg) => {

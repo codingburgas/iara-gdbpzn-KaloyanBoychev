@@ -15,17 +15,51 @@
         {% endif %}
     </div>
 
-    {% if active_sos %}
-    <div class="alert alert-danger d-flex align-items-center gap-3 sos-banner mb-4" role="alert">
-        <i class="bi bi-exclamation-octagon-fill fs-3 flex-shrink-0"></i>
-        <div>
-            <strong>FIREFIGHTER SOS — IMMEDIATE RESPONSE REQUIRED</strong><br>
-            <span class="small">
-                {{ active_sos|length }} active distress signal{{ 's' if active_sos|length > 1 }}.
-            </span>
+ {% if active_sos %}
+<div class="mb-4" id="sosAlertsContainer">
+    {% for alert in active_sos %}
+    <div class="alert alert-danger d-flex align-items-center justify-content-between gap-3 sos-banner mb-2"
+         role="alert" data-alert-id="{{ alert.id }}">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-exclamation-octagon-fill fs-3 flex-shrink-0"></i>
+            <div>
+                <strong>SOS — {{ alert.firefighter.full_name }}</strong><br>
+                <span class="small">
+                    {{ alert.notes or 'No additional details provided.' }}
+                    &middot; {{ alert.triggered_at.strftime('%H:%M') }}
+                </span>
+            </div>
         </div>
+        <button type="button" class="btn btn-light fw-600 btn-sm flex-shrink-0 acknowledge-sos-btn"
+                data-alert-id="{{ alert.id }}">
+            Acknowledge
+        </button>
     </div>
-    {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll('.acknowledge-sos-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const alertId = parseInt(this.dataset.alertId);
+        const socket = window.gdpSocket || io();
+        socket.emit('sos_acknowledge', { alert_id: alertId });
+        this.disabled = true;
+        this.textContent = 'Acknowledging…';
+    });
+});
+
+// Remove the banner live when acknowledged (works even for OTHER ops users
+// acknowledging it from a different browser)
+if (typeof io !== 'undefined') {
+    const socket = window.gdpSocket || io();
+    socket.on('sos_acknowledged', (data) => {
+        const el = document.querySelector(`[data-alert-id="${data.alert_id}"]`);
+        if (el) el.remove();
+    });
+}
+</script>
+{% endif %}
 
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">

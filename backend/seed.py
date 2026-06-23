@@ -152,6 +152,10 @@ def seed():
             caller_name='Тодор Василев', caller_phone='+359887123456',
             description='Пожар на третия етаж. Евакуацията е в ход.',
             hazard_notes='Газова инсталация в мазето.',
+            action_plan='1. Establish water supply from nearest hydrant.\n'
+                        '2. Evacuate floors 1-3 immediately.\n'
+                        '3. Do NOT enter basement — gas shutoff required first.\n'
+                        '4. Secondary unit covers rear stairwell.',
             registered_by_id=dispatcher1.id,
             assigned_crew_id=crew_alpha.id,
             reported_at=datetime.utcnow() - timedelta(minutes=45),

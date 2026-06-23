@@ -2,14 +2,17 @@
 // Global real-time listener — loaded on every authenticated page via base.html
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Only connect if the user is logged in (socket.io script must be loaded)
     if (typeof io === 'undefined') return;
 
-    const socket = io();
+
+    window.gdpSocket = window.gdpSocket || io();
+    const socket = window.gdpSocket;
 
     socket.on('connect', () => {
         console.log('[SocketIO] Connected');
     });
+
+    // ... rest of the existing listeners stay exactly the same
 
     // ── New incident assigned to this user's crew ────────────────────────────
     socket.on('new_incident_assigned', (data) => {

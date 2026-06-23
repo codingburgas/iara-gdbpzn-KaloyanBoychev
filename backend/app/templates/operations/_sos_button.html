@@ -1,0 +1,66 @@
+<!-- Persistent floating SOS button, included on the mobile dashboard -->
+<div id="sosFab" class="sos-fab" title="Emergency SOS">
+    <i class="bi bi-exclamation-octagon-fill"></i>
+</div>
+
+<!-- Confirmation modal — prevents accidental triggers -->
+<div class="modal fade" id="sosConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--gdp-surface); border: 2px solid var(--gdp-danger);">
+            <div class="modal-body text-center p-4">
+                <i class="bi bi-exclamation-octagon-fill text-danger" style="font-size: 3rem;"></i>
+                <h4 class="fw-700 mt-3">Send SOS Alert?</h4>
+                <p class="text-muted small">
+                    This will immediately notify the Operations Center with
+                    your current GPS location.
+                </p>
+                <div class="d-flex gap-2 mt-3">
+                    <button type="button" class="btn btn-outline-secondary flex-fill"
+                            data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmSosBtn"
+                            class="btn btn-danger flex-fill fw-600">
+                        Send SOS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const sosFab = document.getElementById('sosFab');
+    const confirmBtn = document.getElementById('confirmSosBtn');
+    const modalEl = document.getElementById('sosConfirmModal');
+    const modal = new bootstrap.Modal(modalEl);
+
+    sosFab.addEventListener('click', () => modal.show());
+
+    confirmBtn.addEventListener('click', () => {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Sending…';
+
+        const sendSos = (lat, lng) => {
+            const socket = window.gdpSocket || io();
+            socket.emit('sos_trigger', {
+                latitude: lat,
+                longitude: lng,
+                notes: 'SOS triggered from mobile dashboard',
+            });
+            modal.hide();
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Send SOS';
+            showToast('SOS Sent', 'Operations Center has been notified of your location.', 'danger');
+        };
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => sendSos(pos.coords.latitude, pos.coords.longitude),
+                () => sendSos(null, null)  // Send anyway even if GPS fails
+            );
+        } else {
+            sendSos(null, null);
+        }
+    });
+})();
+</script>

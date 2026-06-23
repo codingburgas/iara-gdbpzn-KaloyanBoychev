@@ -31,4 +31,4 @@ def make_shell_context():
 if __name__ == '__main__':
     # IMPORTANT: use socketio.run(), NOT app.run(), from this point onward.
     # This correctly initializes the WebSocket layer for real-time features.
-    socketio.run(app, debug=True, host='127.0.0.1', port=5000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
