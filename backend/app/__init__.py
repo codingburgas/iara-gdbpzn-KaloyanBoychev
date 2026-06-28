@@ -30,22 +30,24 @@ def create_app(config_name: str = 'default') -> Flask:
     socketio.init_app(app, cors_allowed_origins="*")
 
     with app.app_context():
-        from app.models import user, crew, vehicle, incident, task, message  # noqa: F401
+        from app.models import user, crew, vehicle, incident, task, message
 
         from app.blueprints.auth import auth_bp
         from app.blueprints.incidents import incidents_bp
         from app.blueprints.operations import operations_bp
         from app.blueprints.crews import crews_bp
-        from app.blueprints.tasks import tasks_bp          # ← MUST be here
-        from app.blueprints.chat import chat_bp             # ← and this, when you add it
+        from app.blueprints.tasks import tasks_bp
+        from app.blueprints.chat import chat_bp
+        from app.blueprints.vehicles import vehicles_bp        # <- MUST be here
 
         app.register_blueprint(auth_bp, url_prefix='/auth')
         app.register_blueprint(incidents_bp, url_prefix='/incidents')
         app.register_blueprint(operations_bp, url_prefix='/')
         app.register_blueprint(crews_bp, url_prefix='/crews')
-        app.register_blueprint(tasks_bp, url_prefix='/tasks')      # ← and this
-        app.register_blueprint(chat_bp, url_prefix='/chat')         # ← and this
+        app.register_blueprint(tasks_bp, url_prefix='/tasks')
+        app.register_blueprint(chat_bp, url_prefix='/chat')
+        app.register_blueprint(vehicles_bp, url_prefix='/vehicles')  # <- and this
 
-        from app import socket_events  # noqa: F401
+        from app import socket_events
 
     return app

@@ -68,6 +68,11 @@
                         {{ form.assigned_crew_id.label(class="form-label") }}
                         {{ form.assigned_crew_id(class="form-select") }}
                     </div>
+                    <div class="col-12">
+                        {{ form.assigned_vehicle_id.label(class="form-label") }}
+                        {{ form.assigned_vehicle_id(class="form-select") }}
+                        <small class="text-muted">Only AVAILABLE vehicles are shown.</small>
+                    </div>
 
                     <div class="col-12 d-flex gap-2 mt-2">
                         {{ form.submit(class="btn btn-warning fw-600 px-4") }}

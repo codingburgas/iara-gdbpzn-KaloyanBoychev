@@ -73,6 +73,15 @@
                     </a>
                 </li>
                 {% endif %}
+
+                {% if current_user.role.value in ['ops', 'admin'] %}
+<li class="nav-item">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('vehicles') %}active{% endif %}"
+       href="{{ url_for('vehicles.list_vehicles') }}">
+        <i class="bi bi-truck me-1"></i>Vehicles
+    </a>
+</li>
+{% endif %}
                 {% if current_user.is_firefighter %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'operations.mobile_dashboard' %}active{% endif %}"

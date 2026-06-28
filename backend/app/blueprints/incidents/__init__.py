@@ -10,6 +10,8 @@ from app.models.crew import Crew
 from app.blueprints.incidents.forms import IncidentForm
 from app.utils.decorators import ops_or_dispatcher_required
 from app import socketio
+from app.models.vehicle import Vehicle, VehicleStatus
+
 incidents_bp = Blueprint(
     'incidents', __name__,
     template_folder='../../templates/incidents'
@@ -88,6 +90,12 @@ def new_incident():
             incident.assigned_crew_id = form.assigned_crew_id.data
             incident.status = IncidentStatus.DISPATCHED
             incident.dispatched_at = datetime.utcnow()
+
+        if form.assigned_vehicle_id.data and form.assigned_vehicle_id.data != 0:
+            incident.assigned_vehicle_id = form.assigned_vehicle_id.data
+            vehicle = db.session.get(Vehicle, form.assigned_vehicle_id.data)
+            if vehicle:
+                vehicle.status = VehicleStatus.DEPLOYED
 
         db.session.add(incident)
         db.session.flush()

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-700 mb-0">Vehicle Management</h1>
+            <p class="text-muted mb-0 small">Update operational status for each unit</p>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        {% for vehicle in vehicles %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card gdp-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-600">
+                        {{ vehicle.call_sign or vehicle.plate_number }}
+                    </span>
+                    <span class="badge
+                        {% if vehicle.status.value == 'available' %}status-resolved
+                        {% elif vehicle.status.value == 'deployed' %}status-in_progress
+                        {% elif vehicle.status.value == 'maintenance' %}status-pending
+                        {% else %}status-cancelled{% endif %}">
+                        {{ vehicle.status.value.upper() }}
+                    </span>
+                </div>
+
+                <div class="card-body">
+                    <p class="text-muted small mb-1">
+                        {{ vehicle.vehicle_type.value.replace('_', ' ').title() }}
+                    </p>
+                    <p class="small mb-2">
+                        {{ vehicle.make or '' }} {{ vehicle.model or '' }}
+                        {% if vehicle.year %}({{ vehicle.year }}){% endif %}
+                    </p>
+
+                    {% if vehicle.water_capacity_liters %}
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-droplet me-1"></i>{{ vehicle.water_capacity_liters }} L
+                    </p>
+                    {% endif %}
+                    {% if vehicle.crew_capacity %}
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-people me-1"></i>{{ vehicle.crew_capacity }} crew capacity
+                    </p>
+                    {% endif %}
+
+                    <p class="text-muted small mb-3">{{ vehicle.home_station or '—' }}</p>
+
+                    <form method="POST"
+                          action="{{ url_for('vehicles.update_status', vehicle_id=vehicle.id) }}"
+                          class="d-flex gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <select name="status" class="form-select form-select-sm">
+                            {% for s in statuses %}
+                            <option value="{{ s }}" {% if s == vehicle.status.value %}selected{% endif %}>
+                                {{ s.upper() }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-warning fw-600">
+                            <i class="bi bi-check-lg"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <p class="text-muted">No vehicles registered yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -116,6 +116,23 @@
                 </div>
             </div>
 
+            <div class="card gdp-card mb-4">
+    <div class="card-header fw-600">
+        <i class="bi bi-truck me-2"></i>Assigned Vehicle
+    </div>
+    <div class="card-body">
+        {% if incident.assigned_vehicle %}
+            <p class="fw-600 mb-1">
+                {{ incident.assigned_vehicle.call_sign or incident.assigned_vehicle.plate_number }}
+            </p>
+            <p class="text-muted small mb-0">
+                {{ incident.assigned_vehicle.vehicle_type.value.replace('_', ' ').title() }}
+            </p>
+        {% else %}
+            <p class="text-muted mb-0">No vehicle assigned yet.</p>
+        {% endif %}
+    </div>
+</div>
             <!-- Status update (ops/dispatcher/admin only) -->
             {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] and incident.is_active %}
             <div class="card gdp-card">

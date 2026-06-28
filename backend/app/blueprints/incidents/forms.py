@@ -5,7 +5,7 @@ from wtforms import (StringField, TextAreaField, SelectField,
 from wtforms.validators import DataRequired, Length, Optional, NumberRange
 from app.models.incident import IncidentType, IncidentPriority
 from app.models.crew import Crew
-
+from app.models.vehicle import Vehicle, VehicleStatus
 
 class IncidentForm(FlaskForm):
     """Form for creating and editing an Incident."""
@@ -59,12 +59,24 @@ class IncidentForm(FlaskForm):
         coerce=int,
         validators=[Optional()]
     )
+    assigned_vehicle_id = SelectField(
+        'Assign Vehicle',
+        coerce=int,
+        validators=[Optional()]
+    )
+
     submit = SubmitField('Register Incident')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Dynamically populate crew choices from the database
         crews = Crew.query.filter_by(is_active=True).all()
         self.assigned_crew_id.choices = [(0, '— No crew yet —')] + [
             (c.id, f"{c.name} ({c.station})") for c in crews
+        ]
+
+        # Only show vehicles that are currently AVAILABLE
+        available_vehicles = Vehicle.query.filter_by(status=VehicleStatus.AVAILABLE).all()
+        self.assigned_vehicle_id.choices = [(0, '— No vehicle yet —')] + [
+            (v.id, f"{v.call_sign or v.plate_number} ({v.vehicle_type.value.replace('_', ' ').title()})")
+            for v in available_vehicles
         ]
