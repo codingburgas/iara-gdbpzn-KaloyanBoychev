@@ -105,12 +105,7 @@ The app runs at `http://localhost:5000`. **Note:** the app uses SocketIO for rea
 
 `seed.py` drops and recreates all tables, then populates the database with a full showcase dataset — sample users, crews, vehicles, incidents at every stage, tasks, chat messages, and an active SOS alert.
 
-```bash
-cd backend
-python seed.py
-```
 
-⚠️ **This deletes all existing data.** Only run it in development, or intentionally before a demo.
 
 Demo accounts created by the seed script (password shown per role):
 
@@ -121,21 +116,9 @@ Demo accounts created by the seed script (password shown per role):
 | `dispatcher1` | `disp1234`  | Dispatcher         |
 | `ff1`–`ff7`   | `fire1234`  | Firefighter        |
 
-These are development-only credentials — change or remove them before any real deployment.
 
-### Running Tests
 
-```bash
-cd backend
-pytest
-```
 
-## Contributors
 
-- Kaloyan Boychev
-- V. A. Tenev
 
-## License
-
-No license has been specified for this project. All rights reserved by the authors unless stated otherwise.
 
