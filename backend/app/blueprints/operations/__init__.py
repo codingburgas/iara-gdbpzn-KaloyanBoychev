@@ -110,3 +110,25 @@ def mobile_dashboard():
         my_tasks=my_tasks,
         title='My Dashboard'
     )
+
+@operations_bp.route('/history')
+@login_required
+@ops_required
+def incident_history():
+    """Resolved and cancelled incidents, newest first."""
+    from app.models.incident import Incident, IncidentStatus
+
+    closed = Incident.query.filter(
+        Incident.status.in_([IncidentStatus.RESOLVED, IncidentStatus.CANCELLED])
+    ).order_by(Incident.resolved_at.desc().nullslast()).all()
+
+    total_resolved = sum(1 for i in closed if i.status == IncidentStatus.RESOLVED)
+    total_cancelled = sum(1 for i in closed if i.status == IncidentStatus.CANCELLED)
+
+    return render_template(
+        'operations/history.html',
+        incidents=closed,
+        total_resolved=total_resolved,
+        total_cancelled=total_cancelled,
+        title='Incident History'
+    )

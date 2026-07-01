@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 540px;">
+    <div class="card gdp-card">
+        <div class="card-header fw-600">Request Leave</div>
+        <div class="card-body p-4">
+            <form method="POST" novalidate>
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.leave_type.label(class="form-label") }}
+                    {{ form.leave_type(class="form-select") }}
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        {{ form.start_date.label(class="form-label") }}
+                        {{ form.start_date(class="form-control", type="date") }}
+                    </div>
+                    <div class="col-6">
+                        {{ form.end_date.label(class="form-label") }}
+                        {{ form.end_date(class="form-control", type="date") }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    {{ form.reason.label(class="form-label") }}
+                    {{ form.reason(class="form-control", rows=3) }}
+                </div>
+                {{ form.submit(class="btn btn-warning fw-600") }}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

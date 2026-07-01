@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h1 class="h3 fw-700 mb-1">Incident History</h1>
+    <p class="text-muted small mb-4">
+        {{ total_resolved }} resolved &middot; {{ total_cancelled }} cancelled
+    </p>
+
+    <div class="card gdp-card">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover gdp-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Ref</th>
+                        <th>Type</th>
+                        <th>Address</th>
+                        <th>Status</th>
+                        <th>Reported</th>
+                        <th>Closed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inc in incidents %}
+                    <tr>
+                        <td class="font-monospace text-warning small">
+                            <a href="{{ url_for('incidents.detail', incident_id=inc.id) }}" class="text-warning">
+                                {{ inc.reference_number or '#' ~ inc.id }}
+                            </a>
+                        </td>
+                        <td>{{ inc.incident_type.value.replace('_',' ').title() }}</td>
+                        <td>{{ inc.address }}</td>
+                        <td><span class="badge status-{{ inc.status.value }}">{{ inc.status.value.upper() }}</span></td>
+                        <td class="text-muted small">{{ inc.reported_at.strftime('%d %b %Y') }}</td>
+                        <td class="text-muted small">
+                            {{ inc.resolved_at.strftime('%d %b %Y') if inc.resolved_at else '(n/a)' }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-muted text-center py-4">No closed incidents yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

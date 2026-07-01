@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 720px;">
+    <div class="card gdp-card">
+        <div class="card-header fw-600">
+            <i class="bi bi-plus-circle me-2"></i>Register New Incident
+        </div>
+        <div class="card-body p-4">
+
+            <form method="POST" action="{{ url_for('incidents.edit_incident', incident_id=incident.id) }}" novalidate>
+                {{ form.hidden_tag() }}
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ form.incident_type.label(class="form-label") }}
+                        {{ form.incident_type(class="form-select" + (" is-invalid" if form.incident_type.errors else "")) }}
+                        {% for e in form.incident_type.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.priority.label(class="form-label") }}
+                        {{ form.priority(class="form-select" + (" is-invalid" if form.priority.errors else "")) }}
+                        {% for e in form.priority.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+
+                    <div class="col-md-8">
+                        {{ form.address.label(class="form-label") }}
+                        {{ form.address(class="form-control" + (" is-invalid" if form.address.errors else ""),
+                                        placeholder="Street address") }}
+                        {% for e in form.address.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.city.label(class="form-label") }}
+                        {{ form.city(class="form-control") }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.latitude.label(class="form-label") }}
+                        {{ form.latitude(class="form-control", placeholder="e.g. 42.5048") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.longitude.label(class="form-label") }}
+                        {{ form.longitude(class="form-control", placeholder="e.g. 27.4626") }}
+                    </div>
+
+                    <div class="col-md-6">
+                        {{ form.caller_name.label(class="form-label") }}
+                        {{ form.caller_name(class="form-control", placeholder="Caller's name") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.caller_phone.label(class="form-label") }}
+                        {{ form.caller_phone(class="form-control", placeholder="+359...") }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows=3,
+                                            placeholder="Describe the situation...") }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.hazard_notes.label(class="form-label") }}
+                        {{ form.hazard_notes(class="form-control", rows=2,
+                                             placeholder="Known hazards: gas lines, chemicals, access issues...") }}
+                    </div>
+
+                    <div class="col-12">
+                        {{ form.assigned_crew_id.label(class="form-label") }}
+                        {{ form.assigned_crew_id(class="form-select") }}
+                    </div>
+                    <div class="col-12">
+                        {{ form.assigned_vehicle_id.label(class="form-label") }}
+                        {{ form.assigned_vehicle_id(class="form-select") }}
+                        <small class="text-muted">Only AVAILABLE vehicles are shown.</small>
+                    </div>
+
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        {{ form.submit(class="btn btn-warning fw-600 px-4") }}
+                        <a href="{{ url_for('operations.dashboard') }}"
+                           class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

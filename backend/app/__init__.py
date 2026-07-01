@@ -39,6 +39,11 @@ def create_app(config_name: str = 'default') -> Flask:
         from app.blueprints.tasks import tasks_bp
         from app.blueprints.chat import chat_bp
         from app.blueprints.vehicles import vehicles_bp        # <- MUST be here
+        from app.blueprints.shifts import shifts_bp
+        from app.models import user, crew, vehicle, incident, task, message
+        from app.models import user, crew, vehicle, incident, task, message, leave_request
+        from app.blueprints.leave import leave_bp
+        from app.blueprints.admin import admin_bp
 
         app.register_blueprint(auth_bp, url_prefix='/auth')
         app.register_blueprint(incidents_bp, url_prefix='/incidents')
@@ -47,7 +52,9 @@ def create_app(config_name: str = 'default') -> Flask:
         app.register_blueprint(tasks_bp, url_prefix='/tasks')
         app.register_blueprint(chat_bp, url_prefix='/chat')
         app.register_blueprint(vehicles_bp, url_prefix='/vehicles')  # <- and this
-
+        app.register_blueprint(shifts_bp, url_prefix='/shifts')
+        app.register_blueprint(leave_bp, url_prefix='/leave')
+        app.register_blueprint(admin_bp, url_prefix='/admin')
         from app import socket_events
 
     return app

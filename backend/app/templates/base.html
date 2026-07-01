@@ -65,6 +65,13 @@
                         <i class="bi bi-map me-1"></i>Live Map
                     </a>
                 </li>
+
+                <li class="nav-item">
+    <a class="nav-link {% if request.endpoint == 'tasks.list_all_tasks' %}active{% endif %}"
+       href="{{ url_for('tasks.list_all_tasks') }}">
+        <i class="bi bi-list-check me-1"></i>Tasks
+    </a>
+</li>
                 {% if current_user.role.value in ['ops', 'admin'] %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('crews') %}active{% endif %}"
@@ -72,13 +79,40 @@
                         <i class="bi bi-people me-1"></i>Crews
                     </a>
                 </li>
-                {% endif %}
 
-                {% if current_user.role.value in ['ops', 'admin'] %}
+
+               <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('operations.incident_history') }}">
+        <i class="bi bi-archive me-1"></i>History
+    </a>
+</li>
+
 <li class="nav-item">
     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('vehicles') %}active{% endif %}"
        href="{{ url_for('vehicles.list_vehicles') }}">
         <i class="bi bi-truck me-1"></i>Vehicles
+    </a>
+</li>
+{% endif %}
+
+                {% if current_user.role.value in ['ops', 'admin'] %}
+<li class="nav-item">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('shifts') %}active{% endif %}"
+       href="{{ url_for('shifts.list_shifts') }}">
+        <i class="bi bi-clock-history me-1"></i>Shifts
+    </a>
+</li>
+
+                <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('leave.list_requests') }}">
+        <i class="bi bi-calendar-x me-1"></i>Leave Requests
+    </a>
+</li>
+{% endif %}
+{% if current_user.is_admin %}
+<li class="nav-item">
+    <a class="nav-link" href="{{ url_for('admin.list_users') }}">
+        <i class="bi bi-shield-lock me-1"></i>Admin
     </a>
 </li>
 {% endif %}

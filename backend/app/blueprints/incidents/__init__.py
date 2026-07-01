@@ -11,6 +11,7 @@ from app.blueprints.incidents.forms import IncidentForm
 from app.utils.decorators import ops_or_dispatcher_required
 from app import socketio
 from app.models.vehicle import Vehicle, VehicleStatus
+from app.models.task import Task
 
 incidents_bp = Blueprint(
     'incidents', __name__,
@@ -21,30 +22,45 @@ incidents_bp = Blueprint(
 @incidents_bp.route('/')
 @login_required
 def list_incidents():
-    """
-    Show all incidents, newest first.
-    Supports optional ?status= filter in the URL.
-    Example: /incidents/?status=pending
-    """
     status_filter = request.args.get('status')
+    search_query = request.args.get('q', '').strip()
+    type_filter = request.args.get('type')
 
     query = Incident.query.order_by(Incident.reported_at.desc())
 
     if status_filter:
         try:
-            status_enum = IncidentStatus(status_filter)
-            query = query.filter_by(status=status_enum)
+            query = query.filter_by(status=IncidentStatus(status_filter))
         except ValueError:
-            pass  # Invalid filter value — ignore and show all
+            pass
+
+    if type_filter:
+        try:
+            query = query.filter_by(incident_type=IncidentType(type_filter))
+        except ValueError:
+            pass
+
+    if search_query:
+        query = query.filter(
+            db.or_(
+                Incident.address.ilike(f'%{search_query}%'),
+                Incident.reference_number.ilike(f'%{search_query}%'),
+                Incident.city.ilike(f'%{search_query}%'),
+            )
+        )
 
     incidents = query.all()
     statuses = [s.value for s in IncidentStatus]
+    types = [t.value for t in IncidentType]
 
     return render_template(
         'incidents/list.html',
         incidents=incidents,
         statuses=statuses,
+        types=types,
         current_status=status_filter,
+        current_type=type_filter,
+        search_query=search_query,
         title='Incidents'
     )
 
@@ -57,9 +73,11 @@ def detail(incident_id):
     incident = db.session.get(Incident, incident_id)
     if incident is None:
         abort(404)
+    tasks = incident.tasks.order_by(Task.created_at.desc()).all()
     return render_template(
         'incidents/detail.html',
         incident=incident,
+        tasks=tasks,
         quick_templates=QUICK_MESSAGE_TEMPLATES,
         title=f'Incident {incident.reference_number or incident.id}'
     )
@@ -157,3 +175,48 @@ def update_status(incident_id):
     db.session.commit()
     flash(f'Status updated to {new_status.value.upper()}.', 'success')
     return redirect(url_for('incidents.detail', incident_id=incident_id))
+
+@incidents_bp.route('/<int:incident_id>/edit', methods=['GET', 'POST'])
+@login_required
+@ops_or_dispatcher_required
+def edit_incident(incident_id):
+    incident = db.session.get(Incident, incident_id)
+    if incident is None:
+        abort(404)
+
+    form = IncidentForm(obj=incident)
+
+    if request.method == 'GET':
+        # Pre-fill the form with existing values
+        form.incident_type.data = incident.incident_type.value
+        form.priority.data = incident.priority.value
+        form.address.data = incident.address
+        form.city.data = incident.city
+        form.latitude.data = incident.latitude
+        form.longitude.data = incident.longitude
+        form.caller_name.data = incident.caller_name
+        form.caller_phone.data = incident.caller_phone
+        form.description.data = incident.description
+        form.hazard_notes.data = incident.hazard_notes
+        form.assigned_crew_id.data = incident.assigned_crew_id or 0
+
+    if form.validate_on_submit():
+        incident.incident_type = IncidentType(form.incident_type.data)
+        incident.priority = IncidentPriority(form.priority.data)
+        incident.address = form.address.data
+        incident.city = form.city.data
+        incident.latitude = form.latitude.data
+        incident.longitude = form.longitude.data
+        incident.caller_name = form.caller_name.data or None
+        incident.caller_phone = form.caller_phone.data or None
+        incident.description = form.description.data or None
+        incident.hazard_notes = form.hazard_notes.data or None
+
+        if form.assigned_crew_id.data and form.assigned_crew_id.data != 0:
+            incident.assigned_crew_id = form.assigned_crew_id.data
+
+        db.session.commit()
+        flash('Incident updated.', 'success')
+        return redirect(url_for('incidents.detail', incident_id=incident.id))
+
+    return render_template('incidents/edit.html', form=form, incident=incident, title='Edit Incident')

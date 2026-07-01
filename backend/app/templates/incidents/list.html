@@ -12,6 +12,13 @@
         {% endif %}
     </div>
 
+<form method="GET" class="mb-3 d-flex gap-2" style="max-width: 400px;">
+    <input type="text" name="q" class="form-control" placeholder="Search address, reference, city..."
+           value="{{ search_query or '' }}">
+    {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+    <button class="btn btn-outline-warning"><i class="bi bi-search"></i></button>
+</form>
+
     <!-- Status filter tabs -->
     <div class="mb-4">
         <a href="{{ url_for('incidents.list_incidents') }}"

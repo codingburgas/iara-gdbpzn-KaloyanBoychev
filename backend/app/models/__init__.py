@@ -7,7 +7,7 @@ from app.models.vehicle import Vehicle, VehicleType
 from app.models.incident import Incident, IncidentStatus, IncidentType
 from app.models.task import Task, TaskType, TaskStatus
 from app.models.message import Message, SOSAlert
-
+from app.models.leave_request import LeaveRequest, LeaveRequestStatus, LeaveRequestType
 __all__ = [
     'User', 'UserRole',
     'Crew', 'Shift', 'crew_members',

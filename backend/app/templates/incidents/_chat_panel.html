@@ -122,12 +122,18 @@
     // ── SocketIO: join this incident's room, listen for new messages ────────
     const socket = window.gdpSocket || io();
     socket.emit('join_incident', { incident_id: incidentId });
-
+    socket.emit('mark_read', { incident_id: incidentId });
     socket.on('new_chat_message', (msg) => {
         if (msg.incident_id === undefined || msg.incident_id === incidentId) {
             renderMessage(msg);
         }
     });
+
+socket.on('messages_read', (data) => {
+    if (data.incident_id === incidentId && data.reader_id !== currentUserId) {
+        console.log(data.reader_name + ' has seen this conversation');
+    }
+});
 
     // Leave the room when navigating away
     window.addEventListener('beforeunload', () => {

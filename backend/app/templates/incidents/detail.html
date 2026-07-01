@@ -134,6 +134,12 @@
     </div>
 </div>
             <!-- Status update (ops/dispatcher/admin only) -->
+            {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+<a href="{{ url_for('incidents.edit_incident', incident_id=incident.id) }}"
+   class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-pencil me-1"></i>Edit
+</a>
+{% endif %}
             {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] and incident.is_active %}
             <div class="card gdp-card">
                 <div class="card-header fw-600">
@@ -161,6 +167,45 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- Tasks -->
+            <div class="card gdp-card mt-4">
+                <div class="card-header fw-600 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clipboard-check me-2"></i>Tasks</span>
+                    {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+                    <a href="{{ url_for('tasks.new_task', incident_id=incident.id) }}"
+                       class="btn btn-sm btn-warning fw-600">
+                        <i class="bi bi-plus-lg me-1"></i>New Task
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    {% if tasks %}
+                    <ul class="list-group list-group-flush">
+                        {% for task in tasks %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                            <div>
+                                <p class="fw-600 mb-1">{{ task.title }}</p>
+                                <p class="text-muted small mb-1">
+                                    {{ task.task_type.value.replace('_',' ').title() }}
+                                    &middot; {{ task.assigned_crew.name if task.assigned_crew else 'Unassigned' }}
+                                </p>
+                                <span class="badge status-{{ task.status.value }}">{{ task.status.value.upper() }}</span>
+                            </div>
+                            {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil me-1"></i>Edit
+                            </a>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted text-center py-4 mb-0">No tasks yet for this incident.</p>
+                    {% endif %}
+                </div>
+            </div>
 
         </div>
     </div>

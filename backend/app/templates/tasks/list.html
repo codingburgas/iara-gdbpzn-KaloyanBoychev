@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <h1 class="h3 fw-700 mb-4">All Tasks</h1>
+
+    <div class="card gdp-card">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover gdp-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Incident</th>
+                        <th>Crew</th>
+                        <th>Status</th>
+                        {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+                        <th></th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.title }}</td>
+                        <td>{{ task.task_type.value.replace('_',' ').title() }}</td>
+                        <td>
+                            <a href="{{ url_for('incidents.detail', incident_id=task.incident_id) }}" class="text-warning">
+                                {{ task.incident.reference_number or '#' ~ task.incident_id }}
+                            </a>
+                        </td>
+                        <td>{{ task.assigned_crew.name if task.assigned_crew else '(none)' }}</td>
+                        <td><span class="badge status-{{ task.status.value }}">{{ task.status.value.upper() }}</span></td>
+                        {% if current_user.role.value in ['ops', 'dispatcher', 'admin'] %}
+                        <td>
+                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-muted text-center py-4">No tasks found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

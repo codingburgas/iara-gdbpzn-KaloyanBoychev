@@ -226,3 +226,28 @@ def handle_send_message(data):
         'incident_id': incident_id,
         'sent_at': message.sent_at.isoformat(),
     }, room=f'incident_{incident_id}')
+
+    @socketio.on('mark_read')
+    def handle_mark_read(data):
+        """
+        Fired when a user views an incident's chat - marks all messages
+        in that incident as read by them.
+        """
+        if not current_user.is_authenticated:
+            return
+
+        incident_id = data.get('incident_id')
+        if not incident_id:
+            return
+
+        from app.models.message import Message
+        messages = Message.query.filter_by(incident_id=incident_id).all()
+        for msg in messages:
+            msg.mark_read_by(current_user.id)
+        db.session.commit()
+
+        emit('messages_read', {
+            'incident_id': incident_id,
+            'reader_id': current_user.id,
+            'reader_name': current_user.full_name,
+        }, room=f'incident_{incident_id}')
